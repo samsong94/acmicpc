@@ -1,5 +1,9 @@
 /*
 	팀을 N/2명씩 나누고 조합으로 사람의 번호를 고르고 중복 순열로 점수의 합을 구하여 갭의 최소값을 찾기.
+	
+	개선.
+	팀을 나눌때 바로 계산하면 연산 줄어들듯.
+	팀이 추가될 때 이전에 추가되었던 사람들과의 시너지를 바로 더하기
 */
 
 #define _CRT_SECURE_NO_WARNINGS
@@ -14,6 +18,7 @@ int map[20][20];
 vector<int> start_team, link_team;
 bool check[20];
 
+/* 개선 전
 void calculate_gap() {
 	int sum_start = 0, sum_link = 0;
 
@@ -62,6 +67,32 @@ void make_team(int cur, int cnt) {
 
 	return;
 }
+*/
+
+void sum_synergy(int idx, int sum_start, int sum_link) {
+	if (idx == N) { // 종료조건
+		if (min_gap > abs(sum_start - sum_link))
+			min_gap = abs(sum_start - sum_link);
+		return;		
+	}
+
+	if (start_team.size() < N / 2) { // 스타트팀 점수 게산
+		start_team.push_back(idx);
+		int temp_sum = 0;
+		for (int i = 0; i < start_team.size() - 1; i++) // 추가된 선수의 시너지 합 더하기
+			temp_sum += map[start_team[i]][idx] + map[idx][start_team[i]]; 
+		sum_synergy(idx + 1, sum_start + temp_sum, sum_link);
+		start_team.pop_back();
+	}
+	if (link_team.size() < N / 2) { // 링크팀 점수 게산
+		link_team.push_back(idx);
+		int temp_sum = 0;
+		for (int i = 0; i < link_team.size() - 1; i++) // 추가된 선수의 시너지 합 더하기
+			temp_sum += map[link_team[i]][idx] + map[idx][link_team[i]];
+		sum_synergy(idx + 1, sum_start, sum_link + temp_sum);
+		link_team.pop_back();
+	}
+}
 
 int main() {
 	freopen("input.txt", "r", stdin);
@@ -76,7 +107,7 @@ int main() {
 		for (int c = 0; c < N; c++) 
 			cin >> map[r][c];
 
-	make_team(0, 0);
+	sum_synergy(0, 0, 0);
 
 	cout << min_gap << "\n";
 
